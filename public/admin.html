@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin - MANZXY</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header class="header"><div class="logo">Admin — MANZXY ID</div><div><a href="/auth/google" class="btn">Login Google</a> <a href="/auth/github" class="btn">Login GitHub</a></div></header>
+<main style="padding:20px">
+<div style="display:flex;gap:20px">
+  <div style="flex:1;background:#0f1724;padding:12px;border-radius:10px">
+    <h3>Tambah Seri</h3>
+    <form id="formSeries">
+      <input name="title" placeholder="Judul"><br>
+      <input name="description" placeholder="Deskripsi"><br>
+      <input name="coverUrl" placeholder="Cover URL"><br>
+      <input name="status" placeholder="Status"><br>
+      <button type="submit" class="btn">Tambah</button>
+    </form>
+  </div>
+  <div style="flex:1;background:#0f1724;padding:12px;border-radius:10px">
+    <h3>Daftar Seri</h3>
+    <div id="seriesList"></div>
+  </div>
+</div>
+</main>
+<script>
+async function loadSeries(){
+  const r=await fetch('/api/series'); const list=await r.json();
+  document.getElementById('seriesList').innerHTML = list.map(s=>`<div style="padding:8px;border-bottom:1px solid #081224"><strong>${s.title}</strong><div class="muted">${s.description||''}</div><button onclick="del('${s._id}')" class="btn">Hapus</button></div>`).join('');
+}
+document.getElementById('formSeries').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const obj = Object.fromEntries(fd.entries());
+  const res = await fetch('/api/series',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+  if(res.ok){ alert('Added'); loadSeries(); }
+});
+async function del(id){ if(!confirm('Hapus?')) return; await fetch('/api/series/'+id,{method:'DELETE'}); loadSeries(); }
+loadSeries();
+</script>
+</body></html>
