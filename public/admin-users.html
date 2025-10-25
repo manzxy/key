@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Users - MANZXY ID</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>.user-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #081224}.badge-admin{background:linear-gradient(90deg,#3b82f6,#8b5cf6);color:#fff;padding:6px 8px;border-radius:8px;font-weight:700}</style>
+</head>
+<body>
+<header class="header"><div class="logo">Admin — Users</div><div><a class="btn" href="/admin">Dashboard</a></div></header>
+<main style="padding:20px;max-width:900px;margin:0 auto">
+  <h2>Manage Users & Bans</h2>
+  <div style="margin-bottom:12px">
+    <input id="searchEmail" placeholder="Search email..." style="padding:8px;border-radius:8px;border:none;background:#071229;color:#fff;width:320px">
+    <button class="btn" id="btnRefresh">Refresh</button>
+  </div>
+  <div id="userList"></div>
+</main>
+<script>
+async function loadUsers(q='') {
+  const res = await fetch('/api/admin/admins', { credentials: 'include' });
+  const data = await res.json();
+  // also fetch all users via a simple endpoint if exists; fallback to admins list for demo
+  const list = data;
+  document.getElementById('userList').innerHTML = list.map(u => `
+    <div class="user-row">
+      <div>
+        <strong>${u.name||u.email}</strong> <div class="muted">${u.email}</div>
+        <div class="muted">Warnings: ${u.warnings||0} • Comments: ${u.commentsCount||0}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${u.role==='admin'?'<span class="badge-admin">ADMIN</span>':''}
+        ${u.isBanned?'<span style="background:#ef4444;color:#fff;padding:6px;border-radius:6px">BANNED</span>':''}
+        <select id="dur_${u._id}">
+          <option value="">--ban--</option><option value="1d">1 day</option><option value="7d">7 days</option><option value="perm">permanent</option>
+        </select>
+        <button class="btn" onclick="banUser('${u.email}', document.getElementById('dur_${u._id}').value)">Ban</button>
+        <button class="btn" onclick="unbanUser('${u.email}')">Unban</button>
+      </div>
+    </div>`).join('');
+}
+
+async function banUser(email, duration) {
+  if (!duration) return alert('Choose duration');
+  const res = await fetch('/api/admin/ban-user', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, duration }), credentials: 'include' });
+  if (res.ok) { alert('Banned'); loadUsers(); } else alert('Failed');
+}
+async function unbanUser(email) {
+  const res = await fetch('/api/admin/ban-user', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, duration: null }), credentials: 'include' });
+  if (res.ok) { alert('Unbanned'); loadUsers(); } else alert('Failed');
+}
+
+document.getElementById('btnRefresh').onclick = ()=> loadUsers();
+loadUsers();
+</script>
+</body>
+</html>
