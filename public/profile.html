@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profile - MANZXY</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header class="header"><div class="logo">MANZXY ID</div><div><a class="btn" href="/auth/google">Login Google</a> <a class="btn" href="/auth/github">Login GitHub</a></div></header>
+<main style="max-width:480px;margin:20px auto;background:#0f1724;padding:20px;border-radius:12px">
+<h2>Edit Profil</h2>
+<form id="profileForm" enctype="multipart/form-data">
+  <div style="text-align:center"><img id="avatar" src="/images/default.png" width="100" style="border-radius:50%"></div>
+  <label>Nama</label><input id="name" name="name">
+  <label>Password Lama</label><input id="oldPassword" name="oldPassword" type="password">
+  <label>Password Baru</label><input id="newPassword" name="newPassword" type="password">
+  <label>Upload Foto</label><input id="picture" name="picture" type="file" accept="image/*">
+  <button type="submit" class="btn">Simpan</button>
+</form>
+</main>
+<script>
+document.getElementById('profileForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const res = await fetch('/api/profile',{method:'PUT',body:fd,credentials:'include'});
+  const j = await res.json();
+  alert(j.success? 'Berhasil':'Gagal: '+(j.error||''));
+});
+</script>
+</body></html>
