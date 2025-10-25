@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chapter - MANZXY</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header class="header"><a href="/reader" class="btn">← Back</a><div id="seriesTitle"></div></header>
+<div style="display:flex;gap:20px;padding:20px">
+  <aside style="width:320px;background:#0b1220;padding:12px;border-radius:10px" id="chapList">
+    <input id="chapterSearch" placeholder="Cari chapter..." style="width:100%;padding:8px;border-radius:8px;border:none;background:#071229;color:#fff;margin-bottom:8px">
+    <div id="chapters"></div>
+  </aside>
+  <section style="flex:1" id="readerArea">
+    <div id="readerMeta" class="muted"></div>
+    <div id="slider" style="display:flex;overflow-x:scroll;gap:12px;padding:12px"></div>
+    <div style="margin-top:12px">
+      <button id="prevBtn" class="btn">Prev</button>
+      <button id="nextBtn" class="btn">Next</button>
+    </div>
+    <hr>
+    <div id="commentsWrap">
+      <h3>💬 Komentar</h3>
+      <textarea id="commentText" style="width:100%;min-height:80px;background:#071229;color:#fff;border:none;padding:8px;border-radius:8px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px"><button id="btnComment" class="btn">Kirim Komentar</button><button id="btnLoadComments" class="btn">Muat Komentar</button></div>
+      <div id="commentList" style="margin-top:12px"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const id = location.pathname.split('/').pop();
+let data=null, curImages=[], curIndex=0;
+async function load(){
+  const res = await fetch('/api/series/' + id);
+  data = await res.json();
+  document.getElementById('seriesTitle').textContent = data.title;
+  const chList = document.getElementById('chapters');
+  chList.innerHTML = (data.chapters||[]).map(c=>`<div class="muted" style="padding:8px;cursor:pointer" onclick="openChapter(${c.number})">Chapter ${c.number} - ${c.title}</div>`).join('');
+}
+window.openChapter = (num)=> {
+  const ch = data.chapters.find(x=>x.number===num);
+  if(!ch) return alert('Not found');
+  curImages = ch.images.slice(); renderSlider(); document.getElementById('readerMeta').textContent = `Chapter ${ch.number} — ${ch.title}`;
+}
+function renderSlider(){
+  const s = document.getElementById('slider');
+  s.innerHTML = curImages.map(src => `<img src="${src}" style="width:600px;border-radius:8px">`).join('');
+}
+document.getElementById('prevBtn').onclick = ()=> { if(curIndex>0) curIndex--; document.querySelectorAll('#slider img')[curIndex]?.scrollIntoView({behavior:'smooth',inline:'start'}); }
+document.getElementById('nextBtn').onclick = ()=> { if(curIndex < curImages.length-1) curIndex++; document.querySelectorAll('#slider img')[curIndex]?.scrollIntoView({behavior:'smooth',inline:'start'}); }
+
+async function loadComments(){ const r=await fetch('/api/series/'+id+'/comments'); const list=await r.json(); document.getElementById('commentList').innerHTML = list.map(c=>`<div style="background:#0b1220;padding:10px;border-radius:8px;margin-bottom:8px"><strong>${c.userId?.name||'Anon'}</strong><div class="muted">${c.userId?.title||''}</div><p>${c.text}</p></div>`).join('');}
+document.getElementById('btnLoadComments').onclick = loadComments;
+document.getElementById('btnComment').onclick = async ()=> {
+  const text = document.getElementById('commentText').value.trim();
+  if(!text) return alert('Tulis komentar');
+  const res = await fetch('/api/series/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),credentials:'include'});
+  if(!res.ok) return alert('Gagal: '+(await res.text()));
+  document.getElementById('commentText').value=''; loadComments();
+  const j = await res.json(); if (j.user && j.user.title) alert('Title kamu sekarang: '+j.user.title);
+}
+load();
+</script>
+</body>
+</html>
