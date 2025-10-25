@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MANZXY ID - Reader</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="header"><div class="logo">MANZXY ID</div><div><a class="btn" href="/auth/google">Login Google</a> <a class="btn" href="/auth/github">Login GitHub</a></div></header>
+<main id="grid" class="grid"></main>
+<script>
+async function fetchSeries(q=''){
+  const url = '/api/series' + (q?('?search='+encodeURIComponent(q)):'');
+  const r = await fetch(url);
+  return await r.json();
+}
+function cardHTML(s){ return `<div class="card" onclick="openSeries('${s._id}')"><img class="cover" src="${s.cover||'/uploads/covers/placeholder.png'}" /><div style="padding-top:8px"><strong>${s.title}</strong><div class="muted">${s.status||''}</div></div></div>`;}
+async function render(q=''){ const list = await fetchSeries(q); document.getElementById('grid').innerHTML = list.map(cardHTML).join(''); }
+function openSeries(id){ location.href = '/reader/series/' + id; }
+render();
+</script>
+</body>
+</html>
